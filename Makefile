@@ -7,6 +7,9 @@ OUTPUT = ./bin/main
 cfiles = $(wildcard src/*.c)
 objects = $(cfiles:src/%.c=bin/%.o)
 
+install: main
+	cp $(OUTPUT) ~/.local/bin/jdir
+
 main: $(objects)
 	$(CC) -o $(OUTPUT) $(objects) $(CFLAGS) $(LDFLAGS)
 
@@ -19,4 +22,4 @@ run: main
 clean:
 	rm bin/*
 
-.PHONY: main run clean
+.PHONY: install main run clean

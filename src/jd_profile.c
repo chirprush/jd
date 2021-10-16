@@ -76,6 +76,8 @@ void jd_profile_find_directory(struct jd_profile *profile, char *head) {
 		printf("%s\n", profile->home_dir);
 		return;
 	}
+	// TODO: Expand the paths and test if they actually exist
+	// TODO: Return string instead of printing it
 	char *trimmed = trim_string(head);
 	if (*trimmed == '/') {
 		printf("%s\n", trimmed);
