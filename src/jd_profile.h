@@ -10,6 +10,8 @@ struct jd_profile *jd_profile_new();
 void jd_profile_free(struct jd_profile *profile);
 
 void jd_profile_ensure_config(struct jd_profile *profile);
-const char *jd_profile_find_directory(const char *head);
+void jd_profile_find_directory(struct jd_profile *profile, char *head);
+
+void jd_profile_search_dir(struct jd_profile *profile, char *head);
 
 #endif // JD_PROFILE_H

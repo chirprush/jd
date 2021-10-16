@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,15 +32,73 @@ static char *append_strings(const char *start, const char *end) {
 	return dest;
 }
 
+static unsigned char dir_exists(const char *path) {
+	struct stat st = {0};
+	return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
 void jd_profile_ensure_config(struct jd_profile *profile) {
 	char *config_dir = append_strings(profile->home_dir, "/.config/jd");
-	struct stat st = {0};
-	if (stat(config_dir, &st)) {
+	if (!dir_exists(config_dir)) {
 		mkdir(config_dir, 0777);
 	}
 	free(config_dir);
 }
 
-const char *jd_profile_find_directory(const char *head) {
-	return ".";
+static char *trim_string(char *string) {
+	char *result = string;
+	while (*result == ' ') result++;
+	size_t len = strlen(result);
+	size_t i = len - 1;
+	while (result[i] == ' ') {
+		i--;
+	}
+	i++;
+	result[i] = 0;
+	return result;
+}
+
+static char *chop_dir(char *path) {
+	if (strcmp(path, "/") == 0) {
+		return "/";
+	}
+	size_t len = strlen(path);
+	size_t i = len;
+	while (path[i] != '/') {
+		i--;
+	}
+	path[i] = 0;
+	return path;
+}
+
+void jd_profile_find_directory(struct jd_profile *profile, char *head) {
+	if (strlen(head) == 0) {
+		printf("%s\n", profile->home_dir);
+		return;
+	}
+	char *trimmed = trim_string(head);
+	if (*trimmed == '/') {
+		printf("%s\n", trimmed);
+		return;
+	} else if (strcmp(trimmed, ".") == 0) {
+		printf("%s\n", profile->current_dir);
+		return;
+	} else if (strcmp(trimmed, "..") == 0) {
+		printf("%s\n", chop_dir(profile->current_dir));
+		return;
+	}
+	char *path_ended = append_strings(profile->current_dir, "/");
+	char *path = append_strings(path_ended, trimmed);
+	if (*trimmed == '.') {
+		printf("%s\n", path);
+	} else if (!dir_exists(path)) {
+		jd_profile_search_dir(profile, trimmed);
+	} else {
+		printf("%s\n", path);
+	}
+	free(path_ended);
+	free(path);
+}
+
+void jd_profile_search_dir(struct jd_profile *profile, char *head) {
 }
