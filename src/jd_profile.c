@@ -24,7 +24,8 @@ void jd_profile_free(struct jd_profile *profile) {
 }
 
 static char *append_strings(const char *start, const char *end) {
-	char *dest = (char *)malloc(strlen(start) + strlen(end));
+	char *dest = (char *)malloc(strlen(start) + strlen(end) + 1);
+	*dest = 0;
 	strcat(dest, start);
 	strcat(dest, end);
 	return dest;
