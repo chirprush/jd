@@ -1,4 +1,3 @@
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -7,13 +6,14 @@
 #include <string.h>
 
 #include "jd_profile.h"
+#include "jd_path.h"
 
 struct jd_profile *jd_profile_new() {
 	const char *home_dir = getenv("HOME");
 	if (home_dir == NULL) {
 		return NULL;
 	}
-	struct jd_profile *profile = (struct jd_profile *)malloc(sizeof(struct jd_profile));
+	struct jd_profile *profile = malloc(sizeof(struct jd_profile));
 	profile->home_dir = home_dir;
 	profile->current_dir = getcwd(NULL, 0);
 	return profile;
@@ -24,83 +24,60 @@ void jd_profile_free(struct jd_profile *profile) {
 	free(profile);
 }
 
-static char *append_strings(const char *start, const char *end) {
-	char *dest = (char *)malloc(strlen(start) + strlen(end) + 1);
-	*dest = 0;
-	strcat(dest, start);
-	strcat(dest, end);
-	return dest;
-}
-
 static unsigned char dir_exists(const char *path) {
 	struct stat st = {0};
 	return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
 void jd_profile_ensure_config(struct jd_profile *profile) {
-	char *config_dir = append_strings(profile->home_dir, "/.config/jd");
-	if (!dir_exists(config_dir)) {
-		mkdir(config_dir, 0777);
+	struct jd_path *home_path = jd_path_from_posix(profile->home_dir);
+	jd_path_append_s(home_path, ".config");
+	jd_path_append_s(home_path, "jd");
+	char *config_path = jd_path_to_posix(home_path);
+	if (!dir_exists(config_path)) {
+		mkdir(config_path, 0777);
 	}
-	free(config_dir);
+	free(config_path);
+	jd_path_free(home_path);
 }
 
-static char *trim_string(char *string) {
-	char *result = string;
-	while (*result == ' ') result++;
-	size_t len = strlen(result);
-	size_t i = len - 1;
-	while (result[i] == ' ') {
-		i--;
-	}
-	i++;
-	result[i] = 0;
-	return result;
-}
-
-static char *chop_dir(char *path) {
-	if (strcmp(path, "/") == 0) {
-		return "/";
-	}
-	size_t len = strlen(path);
-	size_t i = len;
-	while (path[i] != '/') {
-		i--;
-	}
-	path[i] = 0;
-	return path;
-}
-
-void jd_profile_find_directory(struct jd_profile *profile, char *head) {
+struct jd_path *jd_profile_find_directory(struct jd_profile *profile, char *head) {
 	if (strlen(head) == 0) {
-		printf("%s\n", profile->home_dir);
-		return;
+		return jd_path_from_posix(profile->home_dir);
 	}
-	// TODO: Expand the paths and test if they actually exist
-	// TODO: Return string instead of printing it
-	char *trimmed = trim_string(head);
-	if (*trimmed == '/') {
-		printf("%s\n", trimmed);
-		return;
-	} else if (strcmp(trimmed, ".") == 0) {
-		printf("%s\n", profile->current_dir);
-		return;
-	} else if (strcmp(trimmed, "..") == 0) {
-		printf("%s\n", chop_dir(profile->current_dir));
-		return;
+	struct jd_path *head_path = jd_path_from_posix(head);
+	if (*head == '/') {
+		if (dir_exists(head)) {
+			return head_path;
+		}
+		return NULL;
 	}
-	char *path_ended = append_strings(profile->current_dir, "/");
-	char *path = append_strings(path_ended, trimmed);
-	if (*trimmed == '.') {
-		printf("%s\n", path);
-	} else if (!dir_exists(path)) {
-		jd_profile_search_dir(profile, trimmed);
+	struct jd_path *joined_path = jd_path_from_posix(profile->current_dir);
+	for (int i = 0; i < head_path->length; ++i) {
+		jd_path_append_c(joined_path, head_path->components[i]);
+	}
+	struct jd_path *simplified_path;
+	unsigned char relative = jd_path_is_rel(head_path);
+	if (relative) {
+		simplified_path = jd_path_simplify(joined_path);
+		jd_path_free(joined_path);
 	} else {
-		printf("%s\n", path);
+		simplified_path = joined_path;
 	}
-	free(path_ended);
-	free(path);
+	unsigned char exists = jd_path_exists(simplified_path);
+	jd_path_free(head_path);
+	if (exists) {
+		return simplified_path;
+	} else if (relative) {
+		jd_path_free(simplified_path);
+		return NULL;
+	} else {
+		jd_path_free(simplified_path);
+		// TODO: There is where we should put jd_profile_search_dir
+		return jd_path_from_posix(profile->current_dir);
+	}
 }
 
-void jd_profile_search_dir(struct jd_profile *profile, char *head) {
+struct jd_path *jd_profile_search_dir(struct jd_profile *profile, char *head) {
+	return NULL;
 }
