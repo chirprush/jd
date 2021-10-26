@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "jd_profile.h"
+#include "jd_config.h"
 #include "jd_path.h"
 
 struct jd_profile *jd_profile_new() {
@@ -16,10 +17,12 @@ struct jd_profile *jd_profile_new() {
 	struct jd_profile *profile = malloc(sizeof(struct jd_profile));
 	profile->home_dir = home_dir;
 	profile->current_dir = getcwd(NULL, 0);
+	profile->config = jd_config_new();
 	return profile;
 }
 
 void jd_profile_free(struct jd_profile *profile) {
+	jd_config_free(profile->config);
 	free(profile->current_dir);
 	free(profile);
 }
@@ -39,6 +42,72 @@ void jd_profile_ensure_config(struct jd_profile *profile) {
 	}
 	free(config_path);
 	jd_path_free(home_path);
+}
+
+static unsigned char is_numeric(char c) {
+	return c >= '0' && c <= '9';
+}
+
+static const char *chop_source_line(const char *line) {
+	size_t i = 0;
+	while (is_numeric(line[i])) { ++i; }
+	if (i == 0) {
+		return NULL;
+	} else if (i >= strlen(line) || line[i] != ':') {
+		return NULL;
+	}
+	return line + i + 1;
+}
+
+uint32_t jd_profile_read_config(struct jd_profile *profile) {
+	struct jd_path *config_path = jd_path_from_posix(profile->home_dir);
+	jd_path_append_s(config_path, ".config");
+	jd_path_append_s(config_path, "jd");
+	jd_path_append_s(config_path, "config");
+	char *config_file = jd_path_to_posix(config_path);
+	profile->config->config_file = fopen(config_file, "r+");
+	if (profile->config->config_file == NULL) {
+		profile->config->config_file = fopen(config_file, "w+");
+		jd_path_free(config_path);
+		free(config_file);
+		return 0;
+	}
+	char *line = NULL;
+	size_t n = 0;
+	uint32_t linenr = 0;
+	struct jd_config_object object = {0};
+	while (getline(&line, &n, profile->config->config_file) != EOF) {
+		++linenr;
+		// Remove newline
+		line[strlen(line) - 1] = 0;
+		if (strlen(line) == 0) {
+			free(line);
+			line = NULL;
+			continue;
+		}
+		object.source = line;
+		sscanf(object.source, "%zu", &object.uses);
+		object.path = chop_source_line(line);
+		if (object.path == NULL) {
+			fclose(profile->config->config_file);
+			free(object.source);
+			free(config_file);
+			jd_path_free(config_path);
+			return (linenr << 1) | 1;
+		} else if (!dir_exists(object.path)) {
+			free(line);
+			line = NULL;
+			continue;
+		}
+		jd_config_add_object(profile->config, object);
+		line = NULL;
+	}
+	if (line != NULL) {
+		free(line);
+	}
+	free(config_file);
+	jd_path_free(config_path);
+	return 0;
 }
 
 struct jd_path *jd_profile_find_directory(struct jd_profile *profile, char *head) {

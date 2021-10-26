@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "jd_profile.h"
+#include "jd_config.h"
 #include "jd_path.h"
 
 static char *trim_string(char *string) {
@@ -24,6 +26,13 @@ static char *trim_string(char *string) {
 int main(int argc, char *argv[]) {
 	struct jd_profile *profile = jd_profile_new();
 	jd_profile_ensure_config(profile);
+	uint32_t config_status = jd_profile_read_config(profile);
+	int exit_status = 0;
+	if (config_status & 1) {
+		fprintf(stderr, "jd: line %d: error while reading config file\n", config_status >> 1);
+		exit_status = EXIT_FAILURE;
+		goto free_profile;
+	}
 	if (argc == 1) {
 		printf("%s\n", profile->home_dir);
 	} else {
@@ -31,14 +40,17 @@ int main(int argc, char *argv[]) {
 		struct jd_path *path = jd_profile_find_directory(profile, arg);
 		if (path == NULL) {
 			fprintf(stderr, "jd: could not resolve path '%s'\n", arg);
-			jd_profile_free(profile);
-			return EXIT_FAILURE;
+			exit_status = EXIT_FAILURE;
+			goto free_all;
 		}
 		char *posix_path = jd_path_to_posix(path);
 		printf("%s\n", posix_path);
 		free(posix_path);
 		jd_path_free(path);
 	}
+ free_all:
+	jd_config_write_config(profile->config);
+ free_profile:
 	jd_profile_free(profile);
-	return 0;
+	return exit_status;
 }

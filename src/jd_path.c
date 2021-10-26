@@ -141,7 +141,7 @@ static void ensure_components(struct jd_path *path) {
 	if (path->components == NULL) {
 		path->components = malloc(DEFAULT_SIZE * sizeof(struct jd_path_component));
 		path->length = 0;
-		path->capacity = 16;
+		path->capacity = DEFAULT_SIZE;
 	}
 }
 
@@ -163,3 +163,6 @@ void jd_path_append_s(struct jd_path *path, const char *literal) {
 	struct jd_path_component component = { literal, strlen(literal) };
 	jd_path_append_c(path, component);
 }
+
+#undef DEFAULT_SIZE
+#undef EXTEND_SIZE
