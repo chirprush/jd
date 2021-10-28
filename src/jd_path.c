@@ -66,7 +66,7 @@ struct jd_path *jd_path_from_posix(const char *posix_path) {
 	return path;
 }
 
-char *jd_path_to_posix(struct jd_path *path) {
+char *jd_path_to_posix(const struct jd_path *path) {
 	if (path->length == 0) {
 		char *root_path = malloc(2);
 		root_path[0] = '/';

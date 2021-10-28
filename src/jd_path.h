@@ -20,7 +20,7 @@ void jd_path_free(struct jd_path *path);
 struct jd_path *jd_path_copy(struct jd_path *path);
 
 struct jd_path *jd_path_from_posix(const char *posix_path);
-char *jd_path_to_posix(struct jd_path *path);
+char *jd_path_to_posix(const struct jd_path *path);
 
 unsigned char jd_path_exists(struct jd_path *path);
 unsigned char jd_path_is_rel(struct jd_path *path);

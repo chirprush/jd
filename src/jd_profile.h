@@ -18,6 +18,6 @@ void jd_profile_ensure_config(struct jd_profile *profile);
 uint32_t jd_profile_read_config(struct jd_profile *profile);
 
 struct jd_path *jd_profile_find_directory(struct jd_profile *profile, char *head);
-struct jd_path *jd_profile_search_dir(struct jd_profile *profile, char *head);
+struct jd_path *jd_profile_lookup_dir(struct jd_profile *profile, char *head);
 
 #endif // JD_PROFILE_H

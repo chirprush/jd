@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
 		free(posix_path);
 		jd_path_free(path);
 	}
+	jd_config_sort(profile->config);
  free_all:
 	jd_config_write_config(profile->config);
  free_profile:

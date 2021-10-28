@@ -117,6 +117,7 @@ struct jd_path *jd_profile_find_directory(struct jd_profile *profile, char *head
 	struct jd_path *head_path = jd_path_from_posix(head);
 	if (*head == '/') {
 		if (dir_exists(head)) {
+			jd_config_inc_use(profile->config, head_path);
 			return head_path;
 		}
 		return NULL;
@@ -136,17 +137,26 @@ struct jd_path *jd_profile_find_directory(struct jd_profile *profile, char *head
 	unsigned char exists = jd_path_exists(simplified_path);
 	jd_path_free(head_path);
 	if (exists) {
+		jd_config_inc_use(profile->config, simplified_path);
 		return simplified_path;
 	} else if (relative) {
 		jd_path_free(simplified_path);
 		return NULL;
 	} else {
 		jd_path_free(simplified_path);
-		// TODO: There is where we should put jd_profile_search_dir
-		return jd_path_from_posix(profile->current_dir);
+		struct jd_path *object_path = jd_profile_lookup_dir(profile, head);
+		return object_path;
 	}
 }
 
-struct jd_path *jd_profile_search_dir(struct jd_profile *profile, char *head) {
-	return NULL;
+struct jd_path *jd_profile_lookup_dir(struct jd_profile *profile, char *head) {
+	struct jd_path *head_path = jd_path_from_posix(head);
+	struct jd_config_object *object = jd_config_find_object(profile->config, head_path);
+	jd_path_free(head_path);
+	if (object == NULL) {
+		return NULL;
+	}
+	++object->uses;
+	struct jd_path *object_path = jd_path_from_posix(object->path);
+	return object_path;
 }
