@@ -58,3 +58,11 @@ function jd() {
 ```
 
 *Note that this is my personal function in `zsh`. You may have to change this function for your specific shell.*
+
+### Completions
+
+Currently, command-line completions have only been implemented for `zsh`.
+
+#### ZSH
+
+To use completions for zsh, copy `completions/_jd` to your preferred path in the listed completion directories, usually found in `$fpath` (ex. `~/.oh-my-zsh/completions`). This will then allow you to complete from all available directories in the current working directory (i.e. the same completion found with `cd`) as well the tails of any paths in the directory log.

@@ -1,0 +1,5 @@
+#compdef jd
+
+arguments=("${(@f)$(jdir -l)}" "${(@f)$(find -maxdepth 1 -type d | cut -c '3-')}")
+
+_describe 'jd' arguments

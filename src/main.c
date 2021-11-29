@@ -35,6 +35,13 @@ int main(int argc, char *argv[]) {
 	}
 	if (argc == 1) {
 		printf("%s\n", profile->home_dir);
+	} else if (strcmp(argv[1], "-l") == 0) {
+		for (size_t i = 0; i < profile->config->length; ++i) {
+			struct jd_config_object object = profile->config->objects[i];
+			struct jd_path *path = jd_path_from_posix(object.path);
+			printf("%s\n", path->components[path->length-1].name);
+			jd_path_free(path);
+		}
 	} else {
 		char *arg = trim_string(argv[1]);
 		struct jd_path *path = jd_profile_find_directory(profile, arg);
