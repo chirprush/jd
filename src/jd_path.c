@@ -48,12 +48,13 @@ struct jd_path *jd_path_from_posix(const char *posix_path) {
 			if (current.name) {
 				current.length = (posix_path + i) - current.name;
 				jd_path_append_c(path, current);
+				current.name = NULL;
 			}
 			skip = 0;
 			continue;
 		} else if (i == len - 1) {
 			if (current.name == NULL) {
-				current.name = posix_path;
+				current.name = posix_path + i;
 			}
 			current.length = (posix_path + i) - current.name + 1;
 			jd_path_append_c(path, current);

@@ -2,24 +2,24 @@ CC = gcc
 CFLAGS = -g -Wall -Werror -Wpedantic
 LDFLAGS =
 
-OUTPUT = ./bin/main
+OUTPUT = ./bin/jdir
 
 cfiles = $(wildcard src/*.c)
 objects = $(cfiles:src/%.c=bin/%.o)
 
-install: main
+install: $(OUTPUT)
 	cp $(OUTPUT) ~/.local/bin/jdir
 
-main: $(objects)
+$(OUTPUT): $(objects)
 	$(CC) -o $(OUTPUT) $(objects) $(CFLAGS) $(LDFLAGS)
 
 $(objects):
 	$(CC) -c $(@:bin/%.o=src/%.c) -o $@ $(CFLAGS) $(LDFLAGS)
 
-run: main
+run: $(OUTPUT)
 	$(OUTPUT)
 
 clean:
 	rm bin/*
 
-.PHONY: install main run clean
+.PHONY: install run clean
