@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -Werror -Wpedantic
+CFLAGS = -g -Wall -Werror -Wpedantic -O2
 LDFLAGS =
 
 OUTPUT = ./bin/jdir
